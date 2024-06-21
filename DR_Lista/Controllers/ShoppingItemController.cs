@@ -27,6 +27,7 @@ namespace DR_Lista.Controllers
             return View();
         }
         [HttpPost]
+        [ValidateAntiForgeryToken]
         public async Task<IActionResult> Create([Bind("Id,Description")] ShoppingItem shoppingItem)
         {
             var userId = _userManager.GetUserId(User);
@@ -68,15 +69,18 @@ namespace DR_Lista.Controllers
             return View(shoppingItem);
         }
         [HttpPost]
-        public IActionResult Edit(ShoppingItem shoppingItem)
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Edit(ShoppingItem shoppingItem)
         {
-            if (ModelState.IsValid)
+            if (!ModelState.IsValid)
             {
-                _context.ShoppingItems.Update(shoppingItem);
-                _context.SaveChangesAsync();
-                return RedirectToAction("Index");
+                return View(shoppingItem);
             }
-            return View();
+
+            _context.ShoppingItems.Update(shoppingItem);
+            await _context.SaveChangesAsync();
+
+            return RedirectToAction("Index");
         }
 
         public IActionResult CheckItem(int id)

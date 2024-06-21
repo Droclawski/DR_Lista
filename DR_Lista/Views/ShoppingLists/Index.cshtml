@@ -1,0 +1,223 @@
+﻿@model IEnumerable<DR_Lista.Models.ShoppingList>
+
+@{
+    ViewData["Title"] = "Shopping lists";
+}
+
+<style>
+    body {
+        background-color: #f0f4f8;
+        font-family: 'Arial', sans-serif;
+        margin: 0;
+        padding: 0;
+    }
+
+    .container {
+        max-width: 1200px;
+        margin: auto;
+        padding: 20px;
+    }
+
+    .card-custom {
+        background: linear-gradient(135deg, #ece9e6 0%, #ffffff 100%);
+        border: none;
+        border-radius: 10px;
+        transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+    }
+
+        .card-custom:hover {
+            transform: scale(1.05);
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+        }
+
+    .btn-custom,
+    .btn-warning,
+    .btn-danger,
+    .btn-secondary {
+        border-radius: 20px;
+        padding: 8px 16px;
+        font-weight: bold;
+        border: none;
+    }
+
+    .btn-custom {
+        background-color: #5c7cfa;
+        color: white;
+    }
+
+        .btn-custom:hover {
+            background-color: #4b6ef3;
+        }
+
+    .btn-warning {
+        background-color: #ffc107;
+        color: #212529;
+    }
+
+        .btn-warning:hover {
+            background-color: #e0a800;
+        }
+
+    .btn-danger {
+        background-color: #dc3545;
+        color: white;
+    }
+
+        .btn-danger:hover {
+            background-color: #c82333;
+        }
+
+    .badge-success {
+        background-color: #28a745;
+    }
+
+    .badge-warning {
+        background-color: #ffc107;
+        color: #212529;
+    }
+
+    .input-group {
+        border-radius: 20px;
+        overflow: hidden;
+    }
+
+    .form-control {
+        border: 2px solid #ced4da;
+        border-radius: 0;
+        box-shadow: none;
+    }
+
+        .form-control:focus {
+            border-color: #5c7cfa;
+            box-shadow: none;
+        }
+
+    .card-title {
+        font-size: 1.25rem;
+        margin-bottom: 0.75rem;
+        text-align: center;
+    }
+
+    .list-group-item {
+        border: none;
+        border-bottom: 1px solid #e9ecef;
+        padding: 10px 15px;
+    }
+
+        .list-group-item:last-child {
+            border-bottom: none;
+        }
+
+    .text-end {
+        display: flex;
+        justify-content: flex-end;
+        gap: 10px;
+    }
+
+    .btn-group {
+        display: flex;
+        gap: 5px;
+    }
+
+    .text-red {
+        color: red;
+    }
+
+    .text-normal {
+        color: black;
+    }
+
+</style>
+
+<div class="container mt-4">
+    <div class="row mb-4">
+        <div class="col-md-12 text-center">
+            <h1>@ViewData["Title"]</h1>
+        </div>
+    </div>
+
+    <div class="row mb-3">
+        <div class="col-md-12 text-end">
+            <a asp-controller="ShoppingLists" asp-action="Create" class="btn btn-custom">Add new</a>
+        </div>
+    </div>
+
+    <div class="row">
+        @foreach (var list in Model)
+        {
+            <div class="col-md-4 mb-3">
+                <div class="card card-custom shadow-sm">
+                    <div class="card-body">
+                        <h5 class="card-title">
+                            @if (list.ShoppingItems.All(i => i.IsChecked))
+                            {
+                                <span class="text-decoration-line-through">@list.Title</span>
+                            }
+                            else
+                            {
+                                @list.Title
+                            }
+                        </h5>
+                        <p class="@(list.Date <= DateTime.Now ? "text-red" : "text-normal")">
+                            @list.Date.ToString("dd-MM-yyyy")
+                        </p>
+                        <ul class="list-group list-group-flush">
+                            @foreach (var item in list.ShoppingItems)
+                            {
+                                <li class="list-group-item">
+                                    @if (item.IsChecked)
+                                    {
+                                        <span style="text-decoration: line-through;">@item.Description</span>
+                                    }
+                                    else
+                                    {
+                                        @item.Description
+                                    }
+                                    <div class="float-right">
+                                        <form asp-controller="ShoppingLists" asp-action="CheckItem" asp-route-id="@item.Id" method="post" style="display:inline">
+                                            <button type="submit" class="btn btn-sm btn-secondary">
+                                                @if (item.IsChecked)
+                                                {
+                                                    <i class="bi bi-toggle-on"></i>
+                                                }
+                                                else
+                                                {
+                                                    <i class="bi bi-toggle-off"></i>
+                                                }
+                                            </button>
+                                        </form>
+                                        <form asp-controller="ShoppingLists" asp-action="DeleteItem" asp-route-id="@item.Id" asp-route-shoppingListId="@list.Id" method="post" style="display:inline">
+                                            @Html.AntiForgeryToken()
+                                            <button type="submit" class="btn btn-sm btn-danger"><i class="bi bi-x-lg"></i></button>
+                                        </form>
+                                    </div>
+                                </li>
+                            }
+
+                        </ul>
+                        <form asp-action="AddItem" method="post" class="mt-3">
+                            @Html.AntiForgeryToken()
+                            <input type="hidden" name="shoppingListId" value="@list.Id" />
+                            <div class="input-group">
+                                <select class="form-control" name="selectedItemId">
+                                    <option value="">--Choose item--</option>
+                                    @foreach (var item in ViewBag.AllItems)
+                                    {
+                                        <option value="@item.Id">@item.Description</option>
+                                    }
+                                </select>
+                                <button type="submit" class="btn btn-custom"><i class="bi bi-plus-lg"></i></button>
+                            </div>
+                        </form>
+
+                        <div class="text-end mt-3">                            
+                            <form asp-controller="ShoppingLists" asp-action="Delete" asp-route-id="@list.Id" method="post" style="display:inline">
+                                <button type="submit" class="btn btn-danger btn-sm"><i class="bi bi-x-lg"></i></button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+</div>
